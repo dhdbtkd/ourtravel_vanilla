@@ -10,11 +10,11 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   homeButton: false,
   navigationHelpButton : false
 });
-// viewer.scene.globe.show = false;
+viewer.scene.globe.show = false;
 const createGoogle3DTileset = async () => {
   try {
-    // const tileset = await Cesium.createGooglePhotorealistic3DTileset();
-    // viewer.scene.primitives.add(tileset);
+    const tileset = await Cesium.createGooglePhotorealistic3DTileset();
+    viewer.scene.primitives.add(tileset);
   } catch (error) {
     console.log(`Error loading Photorealistic 3D Tiles tileset.
       ${error}`);
