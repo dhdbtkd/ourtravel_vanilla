@@ -2,6 +2,8 @@ import mappin from '/mappin.png'
 class SearchPlace {
   constructor(){
     this.searchInputId = "searchPlace";
+    this.selectedPlace = {};
+    this.htmlOverlayDomId = "htmlOverlay";
   }
 
   async fetchSearchPlace (param){
@@ -41,7 +43,13 @@ class SearchPlace {
   
   async createSelectedPlaceEntity(viewer, coord){
     let returnEntity = await this.getSampleHeight(viewer,coord).then((result)=>{
-      const cartesianPosition = new Cesium.Cartesian3(result[0].x, result[0].y, result[0].z);
+      let cartesianPosition;
+      if(result[0]){
+        cartesianPosition = new Cesium.Cartesian3(result[0].x, result[0].y, result[0].z);
+      } else {
+        cartesianPosition = new Cesium.Cartesian3.fromDegrees(coord[0], coord[1],100);
+      }
+      
       const entity = viewer.entities.add({
         position: cartesianPosition,
         billboard: {
@@ -55,22 +63,35 @@ class SearchPlace {
           alignedAxis: Cesium.Cartesian3.ZERO,
         },
       });
+      this.createHtmlLabel(viewer, cartesianPosition, this.htmlOverlayDomId);
       return entity;
     });
     return returnEntity;
     
   }
   async getSampleHeight(viewer, coord){
-    //sampleHeight
-    // const inputCartesian = new Cesium.Cartographic.fromDegrees(coord[0], coord[1]);
-    // const returnHeight = viewer.scene.sampleHeight(inputCartesian);
-
     //clampToHeightMostDetailed
     const inputCartesian = new Cesium.Cartesian3.fromDegrees(coord[0], coord[1]);
     const clampedCartesians = await viewer.scene.clampToHeightMostDetailed(
       [inputCartesian]
     );
     return clampedCartesians;
+  }
+  
+  createHtmlLabel(viewer, cartesian, domId){
+    const htmlOverlay = document.querySelector(`#${domId}`);
+    htmlOverlay.classList.remove("hidden");
+    const scratch = new Cesium.Cartesian2();
+    viewer.scene.preRender.addEventListener(function () {
+      const canvasPosition = viewer.scene.cartesianToCanvasCoordinates(
+        cartesian,
+        scratch
+      );
+      if (Cesium.defined(canvasPosition)) {
+        htmlOverlay.style.top = `${canvasPosition.y - 230}px`;
+        htmlOverlay.style.left = `${canvasPosition.x}px`;
+      }
+    });
   }
 }
 export default SearchPlace;

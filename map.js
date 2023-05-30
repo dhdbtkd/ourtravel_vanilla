@@ -1,4 +1,5 @@
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYmM2NTg4Ny1iZDY5LTRlOTEtYjk0ZS1lMDY1NWY4N2VhOTgiLCJpZCI6MjIwNSwiaWF0IjoxNTMxOTg5Nzk0fQ.sPBKjs9mbYue8zBaLpMSUj8hzoF1wsgZcht1iUU2UGk';
+const google = false;
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
   timeline: false,
@@ -10,7 +11,11 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   homeButton: false,
   navigationHelpButton : false
 });
-viewer.scene.globe.show = false;
+if(google){
+  viewer.scene.globe.show = false;
+  createGoogle3DTileset()
+}
+
 const createGoogle3DTileset = async () => {
   try {
     const tileset = await Cesium.createGooglePhotorealistic3DTileset();
@@ -20,7 +25,7 @@ const createGoogle3DTileset = async () => {
       ${error}`);
   }
 }
-createGoogle3DTileset()
+
 viewer.camera.flyTo({
   destination: Cesium.Cartesian3.fromDegrees(-122.4175, 37.655, 400),
   orientation: {
