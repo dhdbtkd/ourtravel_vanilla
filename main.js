@@ -4,13 +4,20 @@ import viteLogo from '/vite.svg'
 import { setupCounter } from './counter.js'
 import SearchPlace from './search.js'
 import viewer from './map.js'
+import TourPlan from './tourPlan.js';
+const tourPlan = new TourPlan();
+console.log(tourPlan.placeList);
+
+const removeHtmlOverlayEvent = ()=>{
+
+}
 
 document.querySelector("#searchPlaceBtn").addEventListener("click", async ()=>{
   const queryString = document.querySelector("#searchPlace").value;
   const queryParam = {
     q: queryString
   };
-  const searchObj = new SearchPlace()
+  const searchObj = new SearchPlace(viewer, tourPlan);
   const queryResult = await searchObj.fetchSearchPlace(queryParam);
   console.log("queryResult", queryResult);
   searchObj.queryResultToList(queryResult, "searchResultList");
