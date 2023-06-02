@@ -2,8 +2,12 @@ import mappin from '/mappin.png'
 class SearchPlace {
   constructor(){
     this.searchInputId = "searchPlace";
-    this.selectedPlace = {};
+    this.selectedPlace = {
+      title : "",
+      position : "",
+    };
     this.htmlOverlayDomId = "htmlOverlay";
+    this.SearchGroup = new Cesium.Entity();
   }
 
   async fetchSearchPlace (param){
@@ -41,7 +45,12 @@ class SearchPlace {
     }
   }
   
-  async createSelectedPlaceEntity(viewer, coord){
+  async createSelectedPlaceEntity(viewer, coord, placeNM){
+    this.resetSearchGroup(viewer);
+    this.selectedPlace = {
+      title : placeNM,
+      position : coord
+    }
     let returnEntity = await this.getSampleHeight(viewer,coord).then((result)=>{
       let cartesianPosition;
       if(result[0]){
@@ -51,6 +60,7 @@ class SearchPlace {
       }
       
       const entity = viewer.entities.add({
+        id : "searchSelected",
         position: cartesianPosition,
         billboard: {
           image: mappin,
@@ -81,6 +91,7 @@ class SearchPlace {
   createHtmlLabel(viewer, cartesian, domId){
     const htmlOverlay = document.querySelector(`#${domId}`);
     htmlOverlay.classList.remove("hidden");
+    htmlOverlay.querySelector("div").innerHTML = this.selectedPlace.title;
     const scratch = new Cesium.Cartesian2();
     viewer.scene.preRender.addEventListener(function () {
       const canvasPosition = viewer.scene.cartesianToCanvasCoordinates(
@@ -92,6 +103,16 @@ class SearchPlace {
         htmlOverlay.style.left = `${canvasPosition.x}px`;
       }
     });
+  }
+  resetSearchGroup(viewer){
+    const findEntity = viewer.entities._entities._array.find((item)=>{
+      return item.id == 'searchSelected'
+    });
+    viewer.entities.remove(findEntity);
+  }
+  clickHtmlLabel(domId){
+    const htmlOverlay = document.querySelector(`#${domId}`);
+    const list = document.querySelector("#planBody .plan_place_list");
   }
 }
 export default SearchPlace;

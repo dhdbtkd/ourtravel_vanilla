@@ -17,18 +17,16 @@ document.querySelector("#searchPlaceBtn").addEventListener("click", async ()=>{
   const resultList = document.querySelectorAll("#searchResultList>div");
   [...resultList].forEach((item)=>{
     item.addEventListener("click", async (e)=>{
+      const placeNM = e.target.innerHTML.split(",")[0];
+      console.log(placeNM);
       const coordArr = e.target.getAttribute('coord').split(',');
-      const selectedEntity = await searchObj.createSelectedPlaceEntity(viewer, coordArr);
-      //
-      console.log("selectedEntity", selectedEntity);
+      const selectedEntity = await searchObj.createSelectedPlaceEntity(viewer, coordArr, placeNM);
       const entityCartesian = selectedEntity.position._value;
       const entityCarto = new Cesium.Cartographic.fromCartesian(entityCartesian);
       const entityHeight = entityCarto.height;
-      console.log("entityHeight", entityHeight);
       const heading = Cesium.Math.toRadians(0);
       const pitch = Cesium.Math.toRadians(-40);
       const range = entityHeight*2.5;
-      console.log("range", range);
       viewer.flyTo(selectedEntity, {
         offset : new Cesium.HeadingPitchRange(heading, pitch, range)
       })

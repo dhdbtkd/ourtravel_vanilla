@@ -26,6 +26,7 @@ const createGoogle3DTileset = async () => {
   }
 }
 
+
 viewer.camera.flyTo({
   destination: Cesium.Cartesian3.fromDegrees(-122.4175, 37.655, 400),
   orientation: {
