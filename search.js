@@ -3,6 +3,7 @@ class SearchPlace {
   constructor(viewer, tourPlan) {
     this.viewer = viewer;
     this.searchInputId = "searchPlace";
+    this.searchPlaceListId = "searchResultList";
     this.selectedPlace = {
       title: "",
       position: "",
@@ -45,7 +46,17 @@ class SearchPlace {
     targetDom.innerHTML = htmlString;
     return htmlString;
   }
-
+  //검색창 및 검색결과 초기화
+  resetSearchInput(dom){
+    if(!dom){
+      dom = this.searchPlaceListId;
+    }
+    console.log("dom", dom);
+    this.setInputRounded(true);
+    const targetDom = document.querySelector(`#${dom}`);
+    targetDom.innerHTML = "";
+  }
+  //검색창 Rounded 토글
   setInputRounded(toggle) {
     const targetDom = document.querySelector(`#${this.searchInputId}`);
     if (toggle) {
@@ -84,6 +95,8 @@ class SearchPlace {
         },
       });
       this.createHtmlLabel(viewer, cartesianPosition, this.htmlOverlayDomId);
+      console.log(cartesianPosition);
+      this.selectedPlace.cartesianPosition = [cartesianPosition.x,cartesianPosition.y,cartesianPosition.z];
       return entity;
     });
     return returnEntity;
@@ -120,8 +133,14 @@ class SearchPlace {
     });
     viewer.entities.remove(findEntity);
   }
+  
   clickHtmlLabel(domId, viewer, tourPlan) {
+    //검색 결과 초기화
+    this.resetSearchInput();
+    //html 오버레이 숨기기
     const htmlOverlay = document.querySelector(`#${domId}`);
+    htmlOverlay.classList.add("hidden");
+    //좌측 목록에 추가
     const list = document.querySelector("#planBody .plan_place_list");
     list.insertAdjacentHTML("beforeend", `<div class="flex items-center select-none">
       <div class="w-8 h-8 flex items-center justify-center rounded-sm duration-150 cursor-ns-resize hover:bg-gray-700">
@@ -137,19 +156,28 @@ class SearchPlace {
       <svg fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
       </div>
     </div>`);
-
+    const tourPlanEntity = tourPlan.addTourPlanEntity(viewer, this.selectedPlace.title, this.selectedPlace.cartesianPosition);
     tourPlan.placeList.push({
       title : this.selectedPlace.title,
       coord : this.selectedPlace.position,
+      coordCartesian : this.selectedPlace.cartesianPosition,
       id : tourPlan.placeList.length+1,
+      entity : tourPlanEntity
     });
-    console.log("tourPlan",tourPlan);
-    // list.querySelector("div:last-child").addEventListener("click",(e)=>{
-    //   const coordArr = e.target.getAttribute("coord").split(",");
-    //   viewer.flyTo(selectedEntity, {
-    //     offset : new Cesium.HeadingPitchRange(heading, pitch, range)
-    //   })
-    // })
+    //Entity간 Line 그리기
+    tourPlan.drawLineBetweenPlaces(viewer);
+    
+    //좌측 여행 목록에서 마지막 추가된 여행지에 클릭 이벤트 추가
+    list.querySelector(":scope > div:last-child >div:nth-child(2)").addEventListener("click",(e)=>{
+      console.log("click", tourPlanEntity);
+      const heading = Cesium.Math.toRadians(0);
+      const pitch = Cesium.Math.toRadians(-40);
+      const range = 500;
+      viewer.flyTo(tourPlanEntity, {
+        offset : new Cesium.HeadingPitchRange(heading, pitch, range),
+        duration : 2
+      })
+    })
   }
 }
 export default SearchPlace;

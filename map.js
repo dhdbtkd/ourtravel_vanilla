@@ -11,10 +11,7 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   homeButton: false,
   navigationHelpButton : false
 });
-if(google){
-  viewer.scene.globe.show = false;
-  createGoogle3DTileset()
-}
+
 
 const createGoogle3DTileset = async () => {
   try {
@@ -24,6 +21,10 @@ const createGoogle3DTileset = async () => {
     console.log(`Error loading Photorealistic 3D Tiles tileset.
       ${error}`);
   }
+}
+if(google){
+  viewer.scene.globe.show = false;
+  createGoogle3DTileset()
 }
 
 
