@@ -76,6 +76,9 @@ class SearchPlace {
       let cartesianPosition;
       if (result[0]) {
         cartesianPosition = new Cesium.Cartesian3(result[0].x, result[0].y, result[0].z);
+        const carto = new Cesium.Cartographic.fromCartesian(cartesianPosition);
+        console.log("carto", carto);
+        cartesianPosition = new Cesium.Cartesian3.fromDegrees(Cesium.Math.toDegrees(carto.longitude), Cesium.Math.toDegrees(carto.latitude), carto.height+60);
       } else {
         cartesianPosition = new Cesium.Cartesian3.fromDegrees(coord[0], coord[1], 100);
       }
@@ -92,6 +95,7 @@ class SearchPlace {
           verticalOrigin: Cesium.VerticalOrigin.CENTER,
           scale: 1.0,
           alignedAxis: Cesium.Cartesian3.ZERO,
+          scaleByDistance: new Cesium.NearFarScalar(1.5e3, 1.0, 4.5e4, 0.1),
         },
       });
       this.createHtmlLabel(viewer, cartesianPosition, this.htmlOverlayDomId);
@@ -103,6 +107,12 @@ class SearchPlace {
 
   }
   async getSampleHeight(viewer, coord) {
+    //sampleHeightMostDetailed
+    // const inputCarto = [new Cesium.Cartographic.fromDegrees(coord[0], coord[1])];
+    // const sampledCartos = await viewer.scene.sampleHeightMostDetailed(
+    //   [inputCarto]
+    // );
+    // return sampledCartos[0];
     //clampToHeightMostDetailed
     const inputCartesian = new Cesium.Cartesian3.fromDegrees(coord[0], coord[1]);
     const clampedCartesians = await viewer.scene.clampToHeightMostDetailed(
@@ -142,7 +152,7 @@ class SearchPlace {
     htmlOverlay.classList.add("hidden");
     //좌측 목록에 추가
     const list = document.querySelector("#planBody .plan_place_list");
-    list.insertAdjacentHTML("beforeend", `<div class="flex items-center select-none">
+    list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none">
       <div class="w-8 h-8 flex items-center justify-center rounded-sm duration-150 cursor-ns-resize hover:bg-gray-700">
       <svg fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M182.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L128 109.3V402.7L86.6 361.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7V109.3l41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96z"/></svg>
       </div>

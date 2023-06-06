@@ -5,13 +5,25 @@ import { setupCounter } from './counter.js'
 import SearchPlace from './search.js'
 import viewer from './map.js'
 import TourPlan from './tourPlan.js';
+
+// import { sql } from "@vercel/postgres";
+
+// const { rows } = await sql`SELECT * FROM Tourplans`;
+// console.log("sql result", row);
+
 const tourPlan = new TourPlan();
+tourPlan.addEventFoldUnfold(1);
 console.log(tourPlan.placeList);
 
 const removeHtmlOverlayEvent = ()=>{
 
 }
-
+document.querySelector("#searchPlace").addEventListener("keydown", (e)=>{
+  if(e.key != "Enter") return;
+  if(document.querySelector("#searchPlace").value.length < 1) return;
+  document.querySelector("#searchPlaceBtn").click();
+  console.log(e.key);
+})
 document.querySelector("#searchPlaceBtn").addEventListener("click", async ()=>{
   const queryString = document.querySelector("#searchPlace").value;
   const queryParam = {
@@ -35,7 +47,8 @@ document.querySelector("#searchPlaceBtn").addEventListener("click", async ()=>{
       const pitch = Cesium.Math.toRadians(-40);
       const range = entityHeight*2.5;
       viewer.flyTo(selectedEntity, {
-        offset : new Cesium.HeadingPitchRange(heading, pitch, range)
+        offset : new Cesium.HeadingPitchRange(heading, pitch, range),
+        duration : 2
       })
       // viewer.camera.flyTo({
       //   destination: Cesium.Cartesian3.fromDegrees(coordArr[0],coordArr[1], 400),
