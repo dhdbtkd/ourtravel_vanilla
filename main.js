@@ -5,6 +5,7 @@ import { setupCounter } from './counter.js'
 import SearchPlace from './search.js'
 import viewer from './map.js'
 import TourPlan from './tourPlan.js';
+import Sortable from 'sortablejs';
 
 // import { sql } from "@vercel/postgres";
 
@@ -12,12 +13,26 @@ import TourPlan from './tourPlan.js';
 // console.log("sql result", row);
 
 const tourPlan = new TourPlan();
-tourPlan.addEventFoldUnfold(1);
-console.log(tourPlan.placeList);
+tourPlan.addDay();
+// tourPlan.addEventFoldUnfold(1);
+// tourPlan.addEventRemoveDay(1);
+
+// Sortable.create(document.querySelector(".plan_place_list"), {
+//   group : 'tourplan',
+//   handle : ".sortable",
+//   ghostClass: 'bg-gray-700',
+//   animation: 150,
+// });
 
 const removeHtmlOverlayEvent = ()=>{
 
 }
+// 날짜추가 버튼 클릭 이벤트
+document.querySelector("#add_day").addEventListener("click",()=>{
+  tourPlan.addDay();
+})
+
+//장소 검색 시 Enter키 입력 이벤트
 document.querySelector("#searchPlace").addEventListener("keydown", (e)=>{
   if(e.key != "Enter") return;
   if(document.querySelector("#searchPlace").value.length < 1) return;
