@@ -12,11 +12,11 @@ import { createClient, createPool } from '@vercel/postgres';
 const pool = createPool({
   connectionString : import.meta.env.VITE_POSTGRES_URL
 })
-console.log(pool);
-const { rows, fields } =  await pool.sql`SELECT * FROM tourplans;`;
-console.log(rows, fields);
-
-console.log(import.meta.env.VITE_POSTGRES_DATABASE)
+const queryPool = async ()=>{
+  const { rows, fields } =  await pool.sql`SELECT * FROM tourplans;`;
+  console.log(rows, fields);
+}
+queryPool();
 
 const tourPlan = new TourPlan();
 tourPlan.addDay();
