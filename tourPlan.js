@@ -111,7 +111,7 @@ class TourPlan {
                 verticalOrigin: Cesium.VerticalOrigin.CENTER,
                 scale: 0.7,
                 alignedAxis: Cesium.Cartesian3.ZERO,
-                scaleByDistance: new Cesium.NearFarScalar(1.5e3, 1.0, 4.5e4, 0.1),
+                scaleByDistance: new Cesium.NearFarScalar(1.5e3, 0.5, 4.5e4, 0.1),
             },
             zIndex: 1,
             label: {
@@ -130,7 +130,7 @@ class TourPlan {
                 ),
                 scaleByDistance: new Cesium.NearFarScalar(
                     5.5e3,
-                    1.0,
+                    0.8,
                     4.5e4,
                     0.5
                 ),

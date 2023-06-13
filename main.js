@@ -7,23 +7,19 @@ import viewer from './map.js'
 import TourPlan from './tourPlan.js';
 import Sortable from 'sortablejs';
 
-// import { sql } from "@vercel/postgres";
+import { createClient, createPool } from '@vercel/postgres';
 
-// const { rows } = await sql`SELECT * FROM Tourplans`;
-// console.log("sql result", row);
+const pool = createPool({
+  connectionString : import.meta.env.VITE_POSTGRES_URL
+})
+console.log(pool);
+const { rows, fields } =  await pool.sql`SELECT * FROM tourplans;`;
+console.log(rows, fields);
+
+console.log(import.meta.env.VITE_POSTGRES_DATABASE)
 
 const tourPlan = new TourPlan();
 tourPlan.addDay();
-// tourPlan.addEventFoldUnfold(1);
-// tourPlan.addEventRemoveDay(1);
-
-// Sortable.create(document.querySelector(".plan_place_list"), {
-//   group : 'tourplan',
-//   handle : ".sortable",
-//   ghostClass: 'bg-gray-700',
-//   animation: 150,
-// });
-
 const removeHtmlOverlayEvent = ()=>{
 
 }
