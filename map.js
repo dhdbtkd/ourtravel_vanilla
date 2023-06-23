@@ -9,9 +9,11 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   infoBox : false,
   geocoder :false,
   homeButton: false,
-  navigationHelpButton : false
+  navigationHelpButton : false,
+  useDefaultRenderLoop: false
 });
-
+viewer.resolutionScale = 1.5
+console.log("viewer", viewer);
 
 const createGoogle3DTileset = async () => {
   try {

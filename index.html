@@ -9,8 +9,8 @@
   <!-- tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Cesium -->
-  <script src="https://cesium.com/downloads/cesiumjs/releases/1.105.1/Build/Cesium/Cesium.js"></script>
-  <link href="https://cesium.com/downloads/cesiumjs/releases/1.105.1/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.106/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.106/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
   <!-- lottie -->
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
   <style>
@@ -39,10 +39,64 @@
 </head>
 
 <body class="w-full h-full">
-  <div class="flex w-full h-full">
+  <div class="intro flex flex-col w-full h-full justify-center items-center bg-gray-900 text-white">
+    <div class="text-2xl flex flex-col items-center mb-20">
+      <div>
+        <lottie-player src="https://assets9.lottiefiles.com/packages/lf20_mflokyg2.json" background="transparent" speed="1" class="w-56" loop autoplay></lottie-player>
+      </div>
+      <div class="mb-6">
+        신나는 해외여행 계획
+      </div>
+      <div class="text-3xl">
+        아워트래블
+      </div>
+    </div>
+    <div class="button flex w-full justify-center">
+      <div class="w-1/4 py-2 text-center border border-gray-200 duration-300 hover:bg-gray-200 cursor-pointer hover:-translate-y-2 mx-2 hover:text-gray-800">
+        처음이에요
+      </div>
+      <div class="w-1/4 py-2 text-center border border-gray-200 duration-300 hover:bg-gray-200 cursor-pointer hover:-translate-y-2 mx-2 hover:text-gray-800">
+        닉네임이 있어요
+      </div>
+    </div>
+  </div>
+  <div class="intro flex flex-col w-full h-full justify-center items-center bg-gray-900 text-white hidden">
+    <div class="text-2xl flex flex-col items-center mb-10 w-full">
+      사용할 닉네임을 입력하세요
+    </div>
+    <div class="flex flex-col w-1/2 ">
+      <div class="text-sm font-bold mb-2">
+        주의사항
+      </div>
+      <div class="flex flex-col ml-2 text-sm">
+        <div>
+          - 닉네임으로 저장된 일정을 불러올 수 있으니 꼭 기억해두세요
+        </div>
+        <div>
+          - 개발 중인 단계로 닉네임을 잊어버릴 경우 찾기를 지원하지 않아요
+        </div>
+      </div>
+    </div>
+    <div class="mb-6 w-1/2">
+      <label for="large-input" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">닉네임</label>
+      <input type="text" class="block w-full p-4 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" maxlength="20">
+    </div>
+    <button type="button" class="w-1/2 focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:focus:ring-yellow-900">여행 시작</button>
+  </div>
+  <div class="intro flex flex-col w-full h-full justify-center items-center bg-gray-900 text-white hidden">
+    <div class="text-2xl flex flex-col items-center mb-10 w-full">
+      내 닉네임을 입력하세요
+    </div>
+    <div class="mb-6 w-1/2">
+      <label for="large-input" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">닉네임</label>
+      <input type="text" class="block w-full p-4 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" maxlength="20">
+    </div>
+    <button type="button" class="w-1/2 focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:focus:ring-yellow-900">여행 불러오기</button>
+  </div>
+  <div class="map flex  w-full h-full hidden">
     <div class="flex flex-col w-1/4 bg-gray-900">
       <div id="appNM" class="font-bold text-2xl text-white text-center py-4 border-b border-gray-600">
-        OurTravel Demo
+        아워트래블 데모
       </div>
       <div class="text-white px-3 flex flex-col flex-1">
         <div class="pt-2 pb-4">
@@ -85,7 +139,7 @@
             날짜추가
           </button>
           <div class="flex">
-            <button type="button"
+            <button id="save" type="button"
               class="w-1/2 flex items-center justify-center text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 mr-1 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">
               <svg class="mr-2" fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em"
                 viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
@@ -109,7 +163,7 @@
       <div class="absolute rounded bg-white shadow p-5 z-10 -translate-x-1/2 hidden text-gray-900 select-none"
         id="htmlOverlay">
         <div class="text-2xl font-bold text-center border-b pb-2">
-
+          
         </div>
         <div id="addPlaceToList"
           class="flex justify-center items-center select-none cursor-pointer px-3 hover:bg-gray-200 duration-300 rounded">

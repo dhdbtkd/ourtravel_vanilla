@@ -6,19 +6,18 @@ import SearchPlace from './search.js'
 import viewer from './map.js'
 import TourPlan from './tourPlan.js';
 import Sortable from 'sortablejs';
+import Intro from './intro';
+import Login from './login';
 
-import { createClient, createPool } from '@vercel/postgres';
+const login = new Login();
+const loginValid = await login.loginValidCheck();
 
-const pool = createPool({
-  connectionString : import.meta.env.VITE_POSTGRES_URL
-})
-const queryPool = async ()=>{
-  const { rows, fields } =  await pool.sql`SELECT * FROM tourplans;`;
-  console.log(rows, fields);
-}
-queryPool();
+const intro = new Intro(loginValid, login.name);
 
-const tourPlan = new TourPlan();
+// const tourPlan = new TourPlan(intro);
+// intro.TourPlan = tourPlan; //intro에 tourplan 할당
+const tourPlan = intro.TourPlan;
+tourPlan.intro = intro;
 tourPlan.addDay();
 const removeHtmlOverlayEvent = ()=>{
 
@@ -26,6 +25,10 @@ const removeHtmlOverlayEvent = ()=>{
 // 날짜추가 버튼 클릭 이벤트
 document.querySelector("#add_day").addEventListener("click",()=>{
   tourPlan.addDay();
+})
+// 저장 버튼 클릭 이벤트
+document.querySelector("#save").addEventListener("click", ()=>{
+  tourPlan.saveTourPlan()
 })
 
 //장소 검색 시 Enter키 입력 이벤트

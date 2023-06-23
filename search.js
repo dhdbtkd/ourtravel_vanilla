@@ -1,4 +1,6 @@
 import mappin from '/mappin.png'
+
+
 class SearchPlace {
   constructor(viewer, tourPlan) {
     this.viewer = viewer;
@@ -111,7 +113,7 @@ class SearchPlace {
   }
   async getSampleHeight(viewer, coord) {
     //clampToHeightMostDetailed
-    const inputCartesian = new Cesium.Cartesian3.fromDegrees(coord[0], coord[1]);
+    const inputCartesian = new Cesium.Cartesian3.fromDegrees(coord[0], coord[1], 0);
     const clampedCartesians = await viewer.scene.clampToHeightMostDetailed(
       [inputCartesian]
     );
@@ -148,7 +150,8 @@ class SearchPlace {
     const htmlOverlay = document.querySelector(`#${domId}`);
     htmlOverlay.classList.add("hidden");
     //좌측 목록에 추가
-    const list = document.querySelector("#planBody .plan_place_list");
+    const countDay = document.querySelectorAll("#planBody .plan_place_list").length;
+    const list = document.querySelectorAll("#planBody .plan_place_list")[countDay-1];
     list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none duration-150">
       <div class="w-8 h-8 flex items-center justify-center rounded-sm duration-150 cursor-ns-resize hover:bg-gray-700">
       <svg class="sortable" fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M182.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L128 109.3V402.7L86.6 361.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7V109.3l41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96z"/></svg>
@@ -164,26 +167,31 @@ class SearchPlace {
       </div>
     </div>`);
     const tourPlanEntity = tourPlan.addTourPlanEntity(viewer, this.selectedPlace.title, this.selectedPlace.cartesianPosition);
-    tourPlan.placeList.push({
+    tourPlan.planInfo.placeList.push({
       title : this.selectedPlace.title,
       coord : this.selectedPlace.position,
       coordCartesian : this.selectedPlace.cartesianPosition,
-      id : tourPlan.placeList.length+1,
+      id : tourPlan.planInfo.placeList.length+1,
       entity : tourPlanEntity,
-      day : 1
+      day : countDay
     });
+    console.log("tourPlan.planInfo.placeList", tourPlan.planInfo.placeList);
     //Entity간 Line 그리기
     tourPlan.drawLineBetweenPlaces(viewer);
     
     //좌측 여행 목록에서 마지막 추가된 여행지에 클릭 이벤트 추가
-    list.querySelector(":scope > div:last-child >div:nth-child(2)").addEventListener("click",(e)=>{
-      console.log("click", tourPlanEntity);
+    const placeDom = list.querySelector(":scope > div:last-child >div:nth-child(2)");
+    this.addEventFly(viewer, tourPlanEntity, placeDom);
+  }
+
+  addEventFly(viewer,entity, placeDom){
+    placeDom.addEventListener("click",(e)=>{
       const heading = Cesium.Math.toRadians(0);
       const pitch = Cesium.Math.toRadians(-40);
       const range = 500;
-      viewer.flyTo(tourPlanEntity, {
+      viewer.flyTo(entity, {
         offset : new Cesium.HeadingPitchRange(heading, pitch, range),
-        duration : 2
+        duration : 1.5
       })
     })
   }
