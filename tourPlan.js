@@ -95,6 +95,55 @@ class TourPlan {
             handle: ".sortable",
             ghostClass: 'bg-gray-700',
             animation: 150,
+            onEnd: (evt) => {
+                if (evt.from == evt.to) console.log("같은 날짜에서 이동");
+                const itemEl = evt.item;
+                const container = itemEl.closest(".plan_day_container");
+                const list = container.querySelector(".plan_place_list");
+                const dayNumber = this.findBelongDay(itemEl);
+                const placeOrder = this.getOrderFromParent(itemEl, list);
+                this.reorderPlaces();
+                // var itemEl = evt.item;  // dragged HTMLElement
+                // evt.to;    // target list
+                // evt.from;  // previous list
+                // evt.oldIndex;  // element's old index within old parent
+                // evt.newIndex;  // element's new index within new parent
+                // evt.oldDraggableIndex; // element's old index within old parent, only counting draggable elements
+                // evt.newDraggableIndex; // element's new index within new parent, only counting draggable elements
+                // evt.clone // the clone element
+                // evt.pullMode;  // when item is in another sortable: `"clone"` if cloning, `true` if moving
+            },
+        });
+    }
+    //여행지가 속한 날짜 확인
+    findBelongDay(placeDom) {
+        const container = placeDom.closest(".plan_day_container");
+        const day = container.getAttribute("value");
+        return day;
+    }
+    /**
+     * 자식 DOM이 부모DOM에서 몇번째 자식인지 순서를 구한다.
+     * @param {HTML Dom} childDom 자식 DOM
+     * @param {HTML Dom} ParentDom 부모 DOm
+     * @returns 
+     */
+    getOrderFromParent(childDom, ParentDom) {
+        return Array.from(ParentDom.childNodes).indexOf(childDom);
+    }
+    reorderPlaces(){
+        const planBody = document.querySelector("#planBody");
+        const placeList = this.planInfo.placeList;
+        placeList.map((cur, idx)=>{
+            const placeDom = planBody.querySelector(`.plan_place[place_id='${cur.id}']`);
+            const list = placeDom.closest(".plan_place_list");
+            const placeDay = this.findBelongDay(placeDom);
+            const placeOrder = this.getOrderFromParent(placeDom, list);
+            cur.day = placeDay;
+            cur.order = placeOrder;
+        })
+        //날짜와 순서 필드 순으로 배열 재정렬
+        placeList.sort((a, b)=>{   
+            return a.day - b.day || a.order - b.order;
         });
     }
     toggleDayList(toggle, day) {
@@ -114,7 +163,7 @@ class TourPlan {
     }
     addTourPlanEntity = (viewer, title, cartesianPosition, placeId) => {
         const entity = viewer.entities.add({
-            id : placeId,
+            id: placeId,
             day: 1,
             position: new Cesium.Cartesian3(cartesianPosition[0], cartesianPosition[1], cartesianPosition[2]),
             billboard: {
@@ -164,6 +213,7 @@ class TourPlan {
         const firstPoint = new Cesium.Cartesian3(beforeEntity.coordCartesian[0], beforeEntity.coordCartesian[1], beforeEntity.coordCartesian[2]);
         const secondPoint = new Cesium.Cartesian3(newEntity.coordCartesian[0], newEntity.coordCartesian[1], newEntity.coordCartesian[2])
         const betweenLine = viewer.entities.add({
+            id: `${beforeEntity.id}-${newEntity.id}`,
             polyline: {
                 positions: [firstPoint, secondPoint],
                 width: 5,
@@ -215,7 +265,9 @@ class TourPlan {
         //좌측 여행 목록에서 마지막 추가된 여행지에 클릭 이벤트 추가
         const placeDom = list.querySelector(":scope > div:last-child >div:nth-child(2)");
         this.addEventFly(viewer, tourPlanEntity, placeDom);
-        console.log(this.planInfo.placeList);
+        //좌측 여행 목록에서 삭제 이벤트 추가
+        const placeRemoveBtn = list.querySelector(":scope > .plan_place:last-child >div:last-child");
+        this.addPlaceRemoveEvent(viewer, tourPlanEntity, placeRemoveBtn, this);
     }
     addEventFly(viewer, entity, placeDom) {
         placeDom.addEventListener("click", (e) => {
@@ -228,13 +280,27 @@ class TourPlan {
             })
         })
     }
+    addPlaceRemoveEvent(viewer, entity, removeBtn, tourPlan) {
+        removeBtn.addEventListener("click", (e) => {
+            //.plan_place 클래스를 가진 부모를 찾는다
+            const placeDom = e.target.closest(".plan_place");
+            const placeId = placeDom.getAttribute("place_id");
+            placeDom.remove(); // Dom 삭제
+            //Entity 삭제
+            viewer.entities.remove(entity);
+            //tourPlan에서 삭제
+            const tourPlan_placeIdx = tourPlan.planInfo.placeList.findIndex((item) => {
+                return item.id == placeId
+            })
+            if (tourPlan_placeIdx > -1) tourPlan.planInfo.placeList.splice(tourPlan_placeIdx, 1);
+            console.log(tourPlan.planInfo.placeList);
+        })
+    }
     //여행계획 데이터 읽어서 나열
     processLoadTourPlan(places) {
         let currentDayCount = this.countDay();
         places.map((cur, idx) => {
-            console.log(cur);
             const day = cur.day;
-            console.log(currentDayCount, day);
             if (currentDayCount < day) { //현재 날짜 수가 여행 계획의 날짜보다 적을 경우
                 for (let i = 0; i < day - currentDayCount; i++) { //날짜 차이 만큼
                     this.addDay(); //날짜를 추가

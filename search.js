@@ -174,7 +174,8 @@ class SearchPlace {
       coordCartesian: this.selectedPlace.cartesianPosition,
       id: placeId,
       entity: tourPlanEntity,
-      day: countDay
+      day: countDay,
+      order : list.querySelectorAll(".plan_place").length
     });
     console.log("tourPlan.planInfo.placeList", tourPlan.planInfo.placeList);
     //Entity간 Line 그리기
@@ -185,7 +186,8 @@ class SearchPlace {
     this.addEventFly(viewer, tourPlanEntity, placeDom);
     //좌측 여행 목록에서 여행지 삭제 버튼에 이벤트 추가
     const placeRemoveBtn = list.querySelector(":scope > .plan_place:last-child >div:last-child");
-    this.addPlaceRemoveEvent(viewer, tourPlanEntity, placeRemoveBtn, tourPlan)
+    this.addPlaceRemoveEvent(viewer, tourPlanEntity, placeRemoveBtn, tourPlan);
+    this.resetSearchGroup(viewer);
   }
   addPlaceRemoveEvent(viewer, entity, removeBtn, tourPlan){
     removeBtn.addEventListener("click",(e)=>{
@@ -199,7 +201,8 @@ class SearchPlace {
       const tourPlan_placeIdx = tourPlan.planInfo.placeList.findIndex((item)=>{
         return item.id == placeId
       })
-      if(tourPlan_placeIdx > -1 ) tourPlan.planInfo.placeList.splice(tourPlan_placeIdx, 1)
+      if(tourPlan_placeIdx > -1 ) tourPlan.planInfo.placeList.splice(tourPlan_placeIdx, 1);
+      console.log(tourPlan.planInfo.placeList);
     })
   }
   /**
