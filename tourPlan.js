@@ -112,8 +112,9 @@ class TourPlan {
             placeList.classList.add("hidden");
         }
     }
-    addTourPlanEntity = (viewer, title, cartesianPosition) => {
+    addTourPlanEntity = (viewer, title, cartesianPosition, placeId) => {
         const entity = viewer.entities.add({
+            id : placeId,
             day: 1,
             position: new Cesium.Cartesian3(cartesianPosition[0], cartesianPosition[1], cartesianPosition[2]),
             billboard: {
@@ -187,8 +188,8 @@ class TourPlan {
     }
     addToList(placeInfo) {
         //좌측 목록에 추가
-        const list = document.querySelectorAll(`#planBody .plan_place_list`)[placeInfo.day-1];
-        list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none duration-150">
+        const list = document.querySelectorAll(`#planBody .plan_place_list`)[placeInfo.day - 1];
+        list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none duration-150" place_id="${placeInfo.id}">
         <div class="w-8 h-8 flex items-center justify-center rounded-sm duration-150 cursor-ns-resize hover:bg-gray-700">
         <svg class="sortable" fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M182.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L128 109.3V402.7L86.6 361.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7V109.3l41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96z"/></svg>
         </div>
@@ -202,7 +203,7 @@ class TourPlan {
         <svg fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
         </div>
         </div>`);
-        const tourPlanEntity = this.addTourPlanEntity(viewer, placeInfo.title, JSON.parse(placeInfo.coordCartesian));
+        const tourPlanEntity = this.addTourPlanEntity(viewer, placeInfo.title, JSON.parse(placeInfo.coordCartesian), placeInfo.id);
         this.planInfo.placeList.push({
             title: placeInfo.title,
             coord: JSON.parse(placeInfo.coord),
@@ -211,7 +212,21 @@ class TourPlan {
             entity: tourPlanEntity,
             day: placeInfo.day
         });
+        //좌측 여행 목록에서 마지막 추가된 여행지에 클릭 이벤트 추가
+        const placeDom = list.querySelector(":scope > div:last-child >div:nth-child(2)");
+        this.addEventFly(viewer, tourPlanEntity, placeDom);
         console.log(this.planInfo.placeList);
+    }
+    addEventFly(viewer, entity, placeDom) {
+        placeDom.addEventListener("click", (e) => {
+            const heading = Cesium.Math.toRadians(0);
+            const pitch = Cesium.Math.toRadians(-40);
+            const range = 500;
+            viewer.flyTo(entity, {
+                offset: new Cesium.HeadingPitchRange(heading, pitch, range),
+                duration: 1.5
+            })
+        })
     }
     //여행계획 데이터 읽어서 나열
     processLoadTourPlan(places) {

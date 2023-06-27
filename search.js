@@ -1,5 +1,5 @@
 import mappin from '/mappin.png'
-
+import Utils from './utils'
 
 class SearchPlace {
   constructor(viewer, tourPlan) {
@@ -14,12 +14,12 @@ class SearchPlace {
     this.SearchGroup = new Cesium.Entity();
     this.initialize(tourPlan);
   }
-  initialize(tourPlan){
+  initialize(tourPlan) {
     var old_element = document.querySelector("#addPlaceToList");
     var new_element = old_element.cloneNode(true);
     old_element.parentNode.replaceChild(new_element, old_element);
-    document.querySelector("#addPlaceToList").addEventListener("click", ()=>{
-      this.clickHtmlLabel(this.htmlOverlayDomId,this.viewer, tourPlan);
+    document.querySelector("#addPlaceToList").addEventListener("click", () => {
+      this.clickHtmlLabel(this.htmlOverlayDomId, this.viewer, tourPlan);
     });
   }
 
@@ -49,8 +49,8 @@ class SearchPlace {
     return htmlString;
   }
   //검색창 및 검색결과 초기화
-  resetSearchInput(dom){
-    if(!dom){
+  resetSearchInput(dom) {
+    if (!dom) {
       dom = this.searchPlaceListId;
     }
     console.log("dom", dom);
@@ -79,10 +79,10 @@ class SearchPlace {
       if (result[0]) {
         cartesianPosition = new Cesium.Cartesian3(result[0].x, result[0].y, result[0].z);
         const carto = new Cesium.Cartographic.fromCartesian(cartesianPosition);
-        if(carto.height < -100){
+        if (carto.height < -100) {
           cartesianPosition = new Cesium.Cartesian3.fromDegrees(Cesium.Math.toDegrees(carto.longitude), Cesium.Math.toDegrees(carto.latitude), 50);
         } else {
-          cartesianPosition = new Cesium.Cartesian3.fromDegrees(Cesium.Math.toDegrees(carto.longitude), Cesium.Math.toDegrees(carto.latitude), carto.height+60);
+          cartesianPosition = new Cesium.Cartesian3.fromDegrees(Cesium.Math.toDegrees(carto.longitude), Cesium.Math.toDegrees(carto.latitude), carto.height + 60);
         }
       } else {
         cartesianPosition = new Cesium.Cartesian3.fromDegrees(coord[0], coord[1], 100);
@@ -105,7 +105,7 @@ class SearchPlace {
       });
       this.createHtmlLabel(viewer, cartesianPosition, this.htmlOverlayDomId);
       console.log(cartesianPosition);
-      this.selectedPlace.cartesianPosition = [cartesianPosition.x,cartesianPosition.y,cartesianPosition.z];
+      this.selectedPlace.cartesianPosition = [cartesianPosition.x, cartesianPosition.y, cartesianPosition.z];
       return entity;
     });
     return returnEntity;
@@ -142,8 +142,9 @@ class SearchPlace {
     });
     viewer.entities.remove(findEntity);
   }
-  
+
   clickHtmlLabel(domId, viewer, tourPlan) {
+    const placeId = Utils.generateRandomString();
     //검색 결과 초기화
     this.resetSearchInput();
     //html 오버레이 숨기기
@@ -151,8 +152,8 @@ class SearchPlace {
     htmlOverlay.classList.add("hidden");
     //좌측 목록에 추가
     const countDay = document.querySelectorAll("#planBody .plan_place_list").length;
-    const list = document.querySelectorAll("#planBody .plan_place_list")[countDay-1];
-    list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none duration-150">
+    const list = document.querySelectorAll("#planBody .plan_place_list")[countDay - 1];
+    list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none duration-150" place_id="placeId">
       <div class="w-8 h-8 flex items-center justify-center rounded-sm duration-150 cursor-ns-resize hover:bg-gray-700">
       <svg class="sortable" fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M182.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L128 109.3V402.7L86.6 361.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7V109.3l41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96z"/></svg>
       </div>
@@ -168,30 +169,53 @@ class SearchPlace {
     </div>`);
     const tourPlanEntity = tourPlan.addTourPlanEntity(viewer, this.selectedPlace.title, this.selectedPlace.cartesianPosition);
     tourPlan.planInfo.placeList.push({
-      title : this.selectedPlace.title,
-      coord : this.selectedPlace.position,
-      coordCartesian : this.selectedPlace.cartesianPosition,
-      id : tourPlan.planInfo.placeList.length+1,
-      entity : tourPlanEntity,
-      day : countDay
+      title: this.selectedPlace.title,
+      coord: this.selectedPlace.position,
+      coordCartesian: this.selectedPlace.cartesianPosition,
+      id: placeId,
+      entity: tourPlanEntity,
+      day: countDay
     });
     console.log("tourPlan.planInfo.placeList", tourPlan.planInfo.placeList);
     //Entity간 Line 그리기
     tourPlan.drawLineBetweenPlaces(viewer);
-    
+
     //좌측 여행 목록에서 마지막 추가된 여행지에 클릭 이벤트 추가
     const placeDom = list.querySelector(":scope > div:last-child >div:nth-child(2)");
     this.addEventFly(viewer, tourPlanEntity, placeDom);
+    //좌측 여행 목록에서 여행지 삭제 버튼에 이벤트 추가
+    const placeRemoveBtn = list.querySelector(":scope > .plan_place:last-child >div:last-child");
+    this.addPlaceRemoveEvent(viewer, tourPlanEntity, placeRemoveBtn, tourPlan)
   }
-
-  addEventFly(viewer,entity, placeDom){
-    placeDom.addEventListener("click",(e)=>{
+  addPlaceRemoveEvent(viewer, entity, removeBtn, tourPlan){
+    removeBtn.addEventListener("click",(e)=>{
+      //.plan_place 클래스를 가진 부모를 찾는다
+      const placeDom = e.target.closest(".plan_place");
+      const placeId = placeDom.getAttribute("place_id");
+      placeDom.remove(); // Dom 삭제
+      //Entity 삭제
+      viewer.entities.remove(entity);
+      //tourPlan에서 삭제
+      const tourPlan_placeIdx = tourPlan.planInfo.placeList.findIndex((item)=>{
+        return item.id == placeId
+      })
+      if(tourPlan_placeIdx > -1 ) tourPlan.planInfo.placeList.splice(tourPlan_placeIdx, 1)
+    })
+  }
+  /**
+   * PlaceDom을 클릭하면 eneity로 카메라가 이동한다.
+   * @param {CesiumViewer} viewer Cesium Viewer 객체
+   * @param {CesiumEnitty} entity 클릭했을 때 이동할 Cesium Entity
+   * @param {HTML Dom} placeDom 클릭했을 때 반응할 HTML Dom
+   */
+  addEventFly(viewer, entity, placeDom) {
+    placeDom.addEventListener("click", (e) => {
       const heading = Cesium.Math.toRadians(0);
       const pitch = Cesium.Math.toRadians(-40);
       const range = 500;
       viewer.flyTo(entity, {
-        offset : new Cesium.HeadingPitchRange(heading, pitch, range),
-        duration : 1.5
+        offset: new Cesium.HeadingPitchRange(heading, pitch, range),
+        duration: 1.5
       })
     })
   }
