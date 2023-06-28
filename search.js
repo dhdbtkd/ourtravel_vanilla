@@ -153,7 +153,7 @@ class SearchPlace {
     //좌측 목록에 추가
     const countDay = document.querySelectorAll("#planBody .plan_place_list").length;
     const list = document.querySelectorAll("#planBody .plan_place_list")[countDay - 1];
-    list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none duration-150" place_id="placeId">
+    list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none duration-150" place_id="${placeId}">
       <div class="w-8 h-8 flex items-center justify-center rounded-sm duration-150 cursor-ns-resize hover:bg-gray-700">
       <svg class="sortable" fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M182.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L128 109.3V402.7L86.6 361.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7V109.3l41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96z"/></svg>
       </div>
@@ -177,9 +177,12 @@ class SearchPlace {
       day: countDay,
       order : list.querySelectorAll(".plan_place").length
     });
-    console.log("tourPlan.planInfo.placeList", tourPlan.planInfo.placeList);
+      console.log("🚀 ~ file: search.js:180 ~ SearchPlace ~ clickHtmlLabel ~ this.selectedPlace.cartesianPosition:", this.selectedPlace.cartesianPosition)
     //Entity간 Line 그리기
-    tourPlan.drawLineBetweenPlaces(viewer);
+    const firstEntity = tourPlan.planInfo.placeList[tourPlan.planInfo.placeList.length-2];
+    const secondEntity = tourPlan.planInfo.placeList[tourPlan.planInfo.placeList.length-1];
+    console.log("🚀 ~ file: search.js:182 ~ SearchPlace ~ clickHtmlLabel ~ firstEntity:", firstEntity)
+    tourPlan.drawLineBetweenPlaces(viewer, firstEntity ,secondEntity);
 
     //좌측 여행 목록에서 마지막 추가된 여행지에 클릭 이벤트 추가
     const placeDom = list.querySelector(":scope > div:last-child >div:nth-child(2)");

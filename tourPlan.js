@@ -6,6 +6,7 @@ import viewer from './map.js';
 class TourPlan {
     constructor(intro) {
         this.activeDay = 1;
+        this.lineGroupNm = "betweenPlaceLine";
         this.planInfo = {
             title: "",
             placeList: [
@@ -103,6 +104,8 @@ class TourPlan {
                 const dayNumber = this.findBelongDay(itemEl);
                 const placeOrder = this.getOrderFromParent(itemEl, list);
                 this.reorderPlaces();
+                this.removeChangedLine();
+                this.redrawLines();
                 // var itemEl = evt.item;  // dragged HTMLElement
                 // evt.to;    // target list
                 // evt.from;  // previous list
@@ -145,6 +148,45 @@ class TourPlan {
         placeList.sort((a, b)=>{   
             return a.day - b.day || a.order - b.order;
         });
+    }
+    removeChangedLine(){
+        const placeList = this.planInfo.placeList;
+        let newIds = [];
+        placeList.map((cur,idx)=>{
+            if(!placeList[idx+1]) return
+            const entityId = `${cur.id}-${placeList[idx+1].id}`;
+            newIds.push(entityId);
+        })
+        const lines = viewer.entities._entities._array.filter((entity)=>{
+            return entity.group == this.lineGroupNm
+        });
+        const changedLines = lines.filter((line)=>{
+            return !newIds.includes(line.id);
+        })
+        console.log("🚀 ~ file: tourPlan.js:165 ~ TourPlan ~ changedLines ~ changedLines:", changedLines)
+        changedLines.map((cur)=>{
+            viewer.entities.remove(cur);
+        })
+        
+    }
+    redrawLines(){
+        const placeList = this.planInfo.placeList;
+        placeList.map((cur,idx)=>{
+            if(!placeList[idx+1]) return;
+            const firstId = cur.id;
+            const secondId = placeList[idx+1].id;
+            const entityId = `${firstId}-${secondId}`;
+            const isEntityExist = this.isEntityExist(viewer, entityId);
+            if(isEntityExist) return; //순서가 변경되지 않은 라인은 건너뛴다
+            this.drawLineBetweenPlaces(viewer, cur, placeList[idx+1]);
+        })
+    }
+    isEntityExist(viewer, entityId){
+        const findEntity = viewer.entities._entities._array.find((entity)=>{
+            return entity.id == entityId;
+        })
+        if(findEntity) return true;
+        return false;
     }
     toggleDayList(toggle, day) {
         const dayDom = document.querySelector(`.plan_day_container[value='${day}']`);
@@ -205,15 +247,20 @@ class TourPlan {
 
         return entity;
     }
-    drawLineBetweenPlaces(viewer) {
-        const placeList = this.planInfo.placeList;
-        if (placeList.length < 2) return;
-        const newEntity = placeList[placeList.length - 1];
-        const beforeEntity = placeList[placeList.length - 2];
-        const firstPoint = new Cesium.Cartesian3(beforeEntity.coordCartesian[0], beforeEntity.coordCartesian[1], beforeEntity.coordCartesian[2]);
-        const secondPoint = new Cesium.Cartesian3(newEntity.coordCartesian[0], newEntity.coordCartesian[1], newEntity.coordCartesian[2])
+    drawLineBetweenPlaces(viewer, firstEntity, secondEntity) {
+        console.log("🚀 ~ file: tourPlan.js:251 ~ TourPlan ~ drawLineBetweenPlaces ~ secondEntity:", secondEntity)
+        console.log("🚀 ~ file: tourPlan.js:251 ~ TourPlan ~ drawLineBetweenPlaces ~ firstEntity:", firstEntity)
+        // const placeList = this.planInfo.placeList;
+        // if (placeList.length < 2) return;
+        // const newEntity = placeList[placeList.length - 1];
+        // const beforeEntity = placeList[placeList.length - 2];
+        const firstCoordCartesian = !Array.isArray(firstEntity.coordCartesian)? JSON.parse(firstEntity.coordCartesian):firstEntity.coordCartesian;
+        const secondCoordCartesian = !Array.isArray(secondEntity.coordCartesian)? JSON.parse(secondEntity.coordCartesian):secondEntity.coordCartesian;
+        const firstPoint = new Cesium.Cartesian3(firstCoordCartesian[0], firstCoordCartesian[1], firstCoordCartesian[2]);
+        const secondPoint = new Cesium.Cartesian3(secondCoordCartesian[0], secondCoordCartesian[1], secondCoordCartesian[2])
         const betweenLine = viewer.entities.add({
-            id: `${beforeEntity.id}-${newEntity.id}`,
+            id: `${firstEntity.id}-${secondEntity.id}`,
+            group : this.lineGroupNm,
             polyline: {
                 positions: [firstPoint, secondPoint],
                 width: 5,
@@ -308,8 +355,12 @@ class TourPlan {
                 }
             }
             this.addToList(cur); //좌측 여행계획 목록에 추가 + Entity 추가
-            this.drawLineBetweenPlaces(viewer);
+            if(!places[idx+1]) return
+            const firstEntity = cur;
+            const secondEntity = places[idx+1];
+            this.drawLineBetweenPlaces(viewer, firstEntity, secondEntity);
         })
+            
     }
     //여행계획 불러오기
     loadTourPlan(name) {
