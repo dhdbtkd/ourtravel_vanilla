@@ -13,10 +13,9 @@ const viewer = new Cesium.Viewer('cesiumContainer', {
   useDefaultRenderLoop: false,
   selectionIndicator : false,
   fullscreenButton : false,
-  globe : false
+  // globe : false
 });
 viewer.resolutionScale = 1.5
-console.log("viewer", viewer);
 
 const createGoogle3DTileset = async () => {
   try {
@@ -31,9 +30,12 @@ const createGoogle3DTileset = async () => {
       ${error}`);
   }
 }
-if(google){
-  // viewer.scene.globe.show = false;
-  await createGoogle3DTileset()
-}
-
+(async ()=>{
+  if(google){
+    viewer.scene.globe.show = false;
+    await createGoogle3DTileset()
+  }
+  
+})()
 export default viewer;
+
