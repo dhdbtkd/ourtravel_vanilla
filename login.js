@@ -42,6 +42,9 @@ class Login {
         console.log(result);
         this.loginSuccess(result.name);
         new TourPlan().loadTourPlan(name);
+      })
+      .catch((e)=>{
+        console.log(e);
       });
   }
   loginSuccess(name) {
