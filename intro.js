@@ -1,12 +1,13 @@
 import viewer from './map.js';
 import TourPlan from './tourPlan';
 import Login from './login';
+import config from './config.js';
 
 class Intro {
     constructor(loginValid, userName) {
         this.userName = userName;
         this.loginValid = loginValid
-        if(loginValid){
+        if (loginValid) {
             const tourPlan = this.loginSuccess(this.userName);
             this.TourPlan = tourPlan;
         }
@@ -26,22 +27,26 @@ class Intro {
         })
     }
     addEventCreateId() {
-        const parentDom = document.querySelector("body .intro:nth-of-type(2)");
+        const parentDom = document.querySelectorAll("body .intro")[1];
         const button = parentDom.querySelector("button");
         const input = parentDom.querySelector("input");
         this.addInputEvent(input);
         button.addEventListener("click", (e) => {
-            if(input.value.length === 0) return
+            if (input.value.length === 0) return
             this.FetchCreateId(input.value);
         })
     }
     addEventLoadId() {
-        const parentDom = document.querySelector("body .intro:nth-of-type(3)");
+        const parentDom = document.querySelectorAll("body .intro")[2];
         const button = parentDom.querySelector("button");
         const input = parentDom.querySelector("input");
         this.addInputEvent(input);
-        button.addEventListener("click", (e) => {
-            this.login(input.value);
+        button.addEventListener("click", async (e) => {
+            const loginResult = await this.login(input.value);
+            if (loginResult) {
+                console.log("🚀 ~ file: intro.js:46 ~ Intro ~ button.addEventListener ~ loginResult:", loginResult)
+                this.loginSuccess(input.value);
+            }
         })
     }
     /**
@@ -56,13 +61,13 @@ class Intro {
         })
     }
     isSpecialCharactor(e) {
-        if (!e.key.match(/^[a-zA-Z]*$/)) {
+        if (!e.key.match(/^[a-zA-Z0-9]*$/)) {
             return true;
         }
         return false;
     }
     FetchCreateId(name) {
-        fetch("http://localhost:3000/users", {
+        fetch(`${config.remoteUrl}/users`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -71,24 +76,24 @@ class Intro {
                 name: name,
             }),
         })
-        .then((response) => response.json())
-        .then(async (result) => {
-            if(result.result){
-                new TourPlan().createTourPlan(name);
-                //생성 완료
-                const loginResult = await this.login(result.data.name);
-                if(loginResult){
-                    this.loginSuccess(result.name);
+            .then((response) => response.json())
+            .then(async (result) => {
+                if (result.result) {
+                    new TourPlan().createTourPlan(name);
+                    //생성 완료
+                    const loginResult = await this.login(name);
+                    if (loginResult) {
+                        this.loginSuccess(name);
+                    }
+                    console.log(result);
+                } else {
+                    alert(result.message);
                 }
-                console.log(result);
-            } else {
-                alert(result.message);
-            }
-        });
+            });
     }
     //로그인
-    async login(name){
-        const loginResult = await fetch("http://localhost:3000/users/login", {
+    async login(name) {
+        const loginResult = await fetch(`${config.remoteUrl}/users/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -99,31 +104,36 @@ class Intro {
             withCredentials: true,
             credentials: 'include'
         })
-        .then((response) => response.json())
-        .then((result) => {
-            if(!result) return;
-            if(!result.code) return;
-            if(result.code === 200){
-                return true
-            } else {
-                alert("닉네임을 다시 한번 확인해주세요");
-                return false;
-            }
-            
-        });
+            .then((response) => response.json())
+            .then((result) => {
+                if (!result) return;
+                if (!result.code) return;
+                if (result.code === 200) {
+                    return true
+                } else {
+                    alert("닉네임을 다시 한번 확인해주세요");
+                    return false;
+                }
+
+            });
         return loginResult;
     }
-    loginSuccess(name){
-        document.querySelectorAll(".intro").forEach((item)=>{
+    loginSuccess(name) {
+        document.querySelectorAll(".intro").forEach((item) => {
             item.classList.add("hidden");
         })
         document.querySelector(".map").classList.remove("hidden");
         document.querySelector("#planHeader>div:first-child").innerHTML = `${name}의 여행계획`;
-        viewer.useDefaultRenderLoop=true;
+        viewer.useDefaultRenderLoop = true;
         this.userName = name;
-        const tourPlan = new TourPlan();
-        tourPlan.loadTourPlan(name);
-        return tourPlan;
+        if (this.tourPlan) {
+            this.tourPlan.loadTourPlan(name);
+        } else {
+            const tourPlan = new TourPlan();
+            tourPlan.loadTourPlan(name);
+            return tourPlan;
+        }
     }
+
 }
 export default Intro

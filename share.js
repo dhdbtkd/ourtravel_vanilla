@@ -5,7 +5,7 @@ import viewer from './map.js';
 import { lineString, bbox, bboxPolygon } from '@turf/turf';
 import config from './config.js';
 
-class TourPlan {
+class Share {
     constructor(shareId) {
         this.activeDay = 1;
         this.lineGroupNm = "betweenPlaceLine";
@@ -43,15 +43,10 @@ class TourPlan {
               d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z" />
           </svg>
           <span class="ml-3">
-            <span class="day_number">
-            ${nextDay}
-            </span>
-            <span>
-                일차
-            </span>
+            ${nextDay}일차
           </span>
           </div>
-          <div class="px-3 py-1 cursor-pointer hover:text-gray-400 duration-200" value="removeDay">
+          <div class="px-3 py-1 cursor-pointer hover:text-gray-400 duration-200 hidden" value="removeDay">
             <svg value="removeDay" class="" fill="currentColor" width="1rem"
             xmlns="http://www.w3.org/2000/svg" height="1em"
             viewBox="0 0 384 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
@@ -90,22 +85,13 @@ class TourPlan {
             this.toggleDayList(false, day);
         })
     }
-    labelDayNumber(){
-        document.querySelectorAll(".plan_day_container").forEach((item, idx)=>{
-            const currentIdx = Number(item.getAttribute("value"));
-            const newIdx = idx+1;
-            if(currentIdx === newIdx) return;
-            item.setAttribute("value", newIdx);
-            item.querySelector(".day_number").innerText = `${newIdx} `;
-        })
-    }
     addEventRemoveDay(day) {
         const dayDom = document.querySelector(`.plan_day_container[value='${day}']`);
         const removeSvg = dayDom.querySelector("div[value='removeDay']");
         removeSvg.addEventListener("click", (e) => {
+            console.log(e.target);
             const dayDom = e.target.closest(".plan_day_container");
             dayDom.remove();
-            this.labelDayNumber();
         })
     }
     addSortable(day) {
@@ -125,15 +111,6 @@ class TourPlan {
                 this.reorderPlaces();
                 this.removeChangedLine();
                 this.redrawLines();
-                // var itemEl = evt.item;  // dragged HTMLElement
-                // evt.to;    // target list
-                // evt.from;  // previous list
-                // evt.oldIndex;  // element's old index within old parent
-                // evt.newIndex;  // element's new index within new parent
-                // evt.oldDraggableIndex; // element's old index within old parent, only counting draggable elements
-                // evt.newDraggableIndex; // element's new index within new parent, only counting draggable elements
-                // evt.clone // the clone element
-                // evt.pullMode;  // when item is in another sortable: `"clone"` if cloning, `true` if moving
             },
         });
     }
@@ -168,45 +145,6 @@ class TourPlan {
             return a.day - b.day || a.order - b.order;
         });
     }
-    removeChangedLine() {
-        const placeList = this.planInfo.placeList;
-        let newIds = [];
-        placeList.map((cur, idx) => {
-            if (!placeList[idx + 1]) return
-            const entityId = `${cur.id}-${placeList[idx + 1].id}`;
-            newIds.push(entityId);
-            
-        })
-        const lines = viewer.entities._entities._array.filter((entity) => {
-            return entity.group == this.lineGroupNm
-        });
-        const changedLines = lines.filter((line) => {
-            return !newIds.includes(line.id);
-        })
-        changedLines.map((cur) => {
-            viewer.entities.remove(cur);
-        })
-
-    }
-    redrawLines() {
-        const placeList = this.planInfo.placeList;
-        placeList.map((cur, idx) => {
-            if (!placeList[idx + 1]) return;
-            const firstId = cur.id;
-            const secondId = placeList[idx + 1].id;
-            const entityId = `${firstId}-${secondId}`;
-            const isEntityExist = this.isEntityExist(viewer, entityId);
-            if (isEntityExist) return; //순서가 변경되지 않은 라인은 건너뛴다
-            this.drawLineBetweenPlaces(viewer, cur, placeList[idx + 1]);
-        })
-    }
-    isEntityExist(viewer, entityId) {
-        const findEntity = viewer.entities._entities._array.find((entity) => {
-            return entity.id == entityId;
-        })
-        if (findEntity) return true;
-        return false;
-    }
     toggleDayList(toggle, day) {
         const dayDom = document.querySelector(`.plan_day_container[value='${day}']`);
         const placeList = dayDom.querySelector(".plan_place_list");
@@ -237,7 +175,6 @@ class TourPlan {
                 scale: 0.7,
                 alignedAxis: Cesium.Cartesian3.ZERO,
                 scaleByDistance: new Cesium.NearFarScalar(1.5e3, 0.5, 4.5e4, 0.1),
-                disableDepthTestDistance : 10000000
             },
             zIndex: 1,
             label: {
@@ -260,7 +197,6 @@ class TourPlan {
                     4.5e4,
                     0.5
                 ),
-                disableDepthTestDistance : 10000000
             },
             zIndex: 2
         });
@@ -287,37 +223,19 @@ class TourPlan {
                     color: Cesium.Color.ORANGE,
                     dashLength: 8.0,
                 }),
-                clampToGround: true
                 // zIndex: 0 //zindex는 clamptoground true 일때만 동작
             },
         });
-    }
-    createNewPlaceListExceptEntity() {
-        let newPlaceList = [];
-        this.planInfo.placeList.map((cur, idx) => {
-            const place = _.cloneDeep(cur);
-            delete place["entity"];
-            place.coord = `[${place.coord[0]},${place.coord[1]}]`;
-            place.coordCartesian = `[${place.coordCartesian[0]},${place.coordCartesian[1]},${place.coordCartesian[2]}]`;
-            newPlaceList.push(place);
-        })
-        return newPlaceList;
     }
     addToList(placeInfo) {
         //좌측 목록에 추가
         const list = document.querySelectorAll(`#planBody .plan_place_list`)[placeInfo.day - 1];
         list.insertAdjacentHTML("beforeend", `<div class="plan_place flex items-center select-none duration-150" place_id="${placeInfo.id}">
         <div class="w-8 h-8 flex items-center justify-center rounded-sm duration-150 cursor-ns-resize hover:bg-gray-700">
-        <svg class="sortable" fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 320 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M182.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L128 109.3V402.7L86.6 361.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 402.7V109.3l41.4 41.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-96-96z"/></svg>
+        <svg fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>
         </div>
         <div coord="${placeInfo.coord}" class="flex-1 cursor-pointer hover:bg-gray-800 duration-300 rounded pl-3 py-1 my-2 mx-1">
             ${placeInfo.title}
-        </div>
-        <div class="w-8 h-8 flex items-center justify-center rounded-full duration-150 cursor-pointer hover:bg-gray-700 hidden">
-        <svg fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/></svg>
-        </div>
-        <div class="w-8 h-8 flex items-center justify-center rounded-full duration-150 cursor-pointer hover:bg-gray-700">
-        <svg fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
         </div>
         </div>`);
         const tourPlanEntity = this.addTourPlanEntity(viewer, placeInfo.title, JSON.parse(placeInfo.coordCartesian), placeInfo.id);
@@ -332,9 +250,6 @@ class TourPlan {
         //좌측 여행 목록에서 마지막 추가된 여행지에 클릭 이벤트 추가
         const placeDom = list.querySelector(":scope > div:last-child >div:nth-child(2)");
         this.addEventFly(viewer, tourPlanEntity, placeDom);
-        //좌측 여행 목록에서 삭제 이벤트 추가
-        const placeRemoveBtn = list.querySelector(":scope > .plan_place:last-child >div:last-child");
-        this.addPlaceRemoveEvent(viewer, tourPlanEntity, placeRemoveBtn, this);
     }
     addEventFly(viewer, entity, placeDom) {
         placeDom.addEventListener("click", (e) => {
@@ -345,24 +260,6 @@ class TourPlan {
                 offset: new Cesium.HeadingPitchRange(heading, pitch, range),
                 duration: 1.5
             })
-        })
-    }
-    addPlaceRemoveEvent(viewer, entity, removeBtn, tourPlan) {
-        removeBtn.addEventListener("click", (e) => {
-            //.plan_place 클래스를 가진 부모를 찾는다
-            const placeDom = e.target.closest(".plan_place");
-            const placeId = placeDom.getAttribute("place_id");
-            placeDom.remove(); // Dom 삭제
-            //Entity 삭제
-            viewer.entities.remove(entity);
-            //tourPlan에서 삭제
-            const tourPlan_placeIdx = tourPlan.planInfo.placeList.findIndex((item) => {
-                return item.id == placeId
-            })
-            if (tourPlan_placeIdx > -1) tourPlan.planInfo.placeList.splice(tourPlan_placeIdx, 1);
-            this.reorderPlaces();
-            this.removeChangedLine();
-            this.redrawLines();
         })
     }
     //여행계획 데이터 읽어서 나열
@@ -384,10 +281,10 @@ class TourPlan {
         })
 
     }
-    //여행계획 불러오기
+    //공유 여행계획 불러오기
     loadTourPlan(name) {
         if (!name) name = this.intro.userName;
-        fetch(`${config.remoteUrl}/tourplans/${name}`, {
+        fetch(`${config.remoteUrl}/share/${name}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -399,26 +296,34 @@ class TourPlan {
             .then((result) => {
                 if (result.result) {
                     this.processLoadTourPlan(result.data[0].places);
-                    if (result.data[0].places.length > 0) {
-                        const turfLine = this.getTurfLine(this.planInfo.placeList);
-                        const turfBboxPolygon = this.getBbox(turfLine);
-                        this.setView(turfBboxPolygon);
-                    } else {
-
-                        viewer.camera.flyTo({
-                            destination: Cesium.Cartesian3.fromDegrees(-122.4175, 37.655, 400),
-                            orientation: {
-                                heading: Cesium.Math.toRadians(0.0),
-                                pitch: Cesium.Math.toRadians(-90.0),
-                            }
-                        });
-                    }
-
+                    const turfLine = this.getTurfLine(this.planInfo.placeList);
+                    const turfBboxPolygon = this.getBbox(turfLine);
+                    this.setView(turfBboxPolygon);
+                    this.loadSuccess(name);
+                    this.toggleEditorDom(false);
                 } else {
                     console.log("loadTourPlan fail");
                 }
 
             });
+    }
+    loadSuccess(name) {
+        document.querySelectorAll(".intro").forEach((item) => {
+            item.classList.add("hidden");
+        })
+        document.querySelector(".map").classList.remove("hidden");
+        document.querySelector("#planHeader>div:first-child").innerHTML = `${name}의 여행계획`;
+        viewer.useDefaultRenderLoop = true;
+        this.userName = name;
+    }
+    toggleEditorDom(toggle) {
+        if (toggle) {
+
+        } else {
+            document.querySelector("#footer").classList.add("hidden");
+            document.querySelector("#searchBox").classList.add("hidden");
+        }
+
     }
     /**
      * 여행 계획을 업데이트한다
@@ -465,59 +370,20 @@ class TourPlan {
     countDay() {
         return document.querySelectorAll(".plan_day_container").length;
     }
-    toggleShareModal(toggle) {
-        const shareModal = document.querySelector("#shareModal");
-        if (toggle) {
-            shareModal.classList.remove("hidden")
-            this.createShareUrl()
-        } else {
-            shareModal.classList.add("hidden");
-            this.toggleShareCopyBtn(false);
-        }
-
-    }
-    toggleShareCopyBtn(toggle) {
-        if (toggle) {
-            const button = document.querySelector("#share_copybtn");
-            const checkIcon = button.querySelector("svg:nth-child(1)");
-            checkIcon.classList.remove("hidden");
-            const copyIcon = button.querySelector("svg:nth-child(2)");
-            copyIcon.classList.add("hidden");
-            button.classList.add("bg-green-500");
-            button.classList.remove("hover:bg-blue-800");
-            button.querySelector("span").innerText = "복사 완료";
-        } else {
-            const button = document.querySelector("#share_copybtn");
-            const checkIcon = button.querySelector("svg:nth-child(1)");
-            checkIcon.classList.add("hidden");
-            const copyIcon = button.querySelector("svg:nth-child(2)");
-            copyIcon.classList.remove("hidden");
-            button.classList.remove("bg-green-500");
-            button.classList.add("hover:bg-blue-800");
-            button.querySelector("span").innerText = "복사";
-        }
-
-    }
-    copyValue(value) {
-        window.navigator.clipboard.writeText(value).then(() => {
-            this.toggleShareCopyBtn(true);
-        });
-    }
-    createShareUrl() {
-        const host = window.location.host;
-        document.querySelector("#shareurl").value = `https://${host}/?share=${this.intro.userName}`;
-    }
     getTurfLine(places) {
+        console.log("🚀 ~ file: share.js:380 ~ Share ~ getTurfLine ~ places:", places)
         let lineArr = [];
         places.map((cur) => {
             lineArr.push(cur.coord)
         })
         const turfLine = lineString(lineArr);
+        console.log("🚀 ~ file: share.js:386 ~ Share ~ getTurfLine ~ turfLine:", turfLine)
         return turfLine
     }
     getBbox(turfLine) {
         const turfBbox = bbox(turfLine);
         const turfBboxPolygon = bboxPolygon(turfBbox);
+        console.log("🚀 ~ file: share.js:393 ~ Share ~ getBbox ~ bboxPolygon:", turfBboxPolygon)
         return turfBboxPolygon
     }
     setView(turfBboxPolygon) {
@@ -528,8 +394,8 @@ class TourPlan {
             maxY: turfBboxPolygon.bbox[3]
         }
         const bufferSize = {
-            x: Math.abs(extent.minX - extent.maxX) * 0.1,
-            y: Math.abs(extent.minY - extent.maxY) * 0.1,
+            x : Math.abs(extent.minX-extent.maxX)*0.1,
+            y : Math.abs(extent.minY-extent.maxY)*0.1,
         }
         const rectangle = Cesium.Rectangle.fromDegrees(
             extent.minX - bufferSize.x,
@@ -543,4 +409,4 @@ class TourPlan {
     }
 }
 
-export default TourPlan;
+export default Share;

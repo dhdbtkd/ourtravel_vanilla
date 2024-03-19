@@ -1,9 +1,11 @@
 import mappin from '/mappin.png'
 import Utils from './utils'
+import config from './config.js';
 
 class SearchPlace {
   constructor(viewer, tourPlan) {
     this.viewer = viewer;
+    this.searchEngine = "google";
     this.searchInputId = "searchPlace";
     this.searchPlaceListId = "searchResultList";
     this.selectedPlace = {
@@ -24,8 +26,16 @@ class SearchPlace {
   }
 
   async fetchSearchPlace(param) {
+    let url;
     const query = param.q;
-    const queryResult = await fetch(`https://nominatim.openstreetmap.org/search?q=${param.q}&format=json&accept-language=ko-kr,ko;q=0.8,en-us;q=0.5,en;q=0.3?limit=5`)
+    if(this.searchEngine === "google"){
+      url = `${config.remoteUrl}/search/autocomplete/${query}`;
+    } else {
+      
+      url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&accept-language=ko-kr,ko;q=0.8,en-us;q=0.5,en;q=0.3?limit=5`
+    }
+    
+    const queryResult = await fetch(url)
       .then((response) => {
         return response.json();
       })
@@ -40,11 +50,26 @@ class SearchPlace {
     const targetDom = document.querySelector(`#${dom}`);
     targetDom.innerHTML = "";
     let htmlString = '';
-    data.map((cur, idx) => {
-      if (cur.importance > 0.4) {
-        htmlString += `<div class='p-2 duration-300 cursor-pointer hover:bg-gray-200' coord='${cur.lon},${cur.lat}'>${cur.display_name}</div>`;
-      }
-    })
+    if(this.searchEngine === "google"){
+      data.data.predictions.map((cur, idx) => {
+        htmlString += `<div class='search_place p-2 duration-300 cursor-pointer hover:bg-gray-200 border-b border-gray-100' place_id='${cur.place_id}'>
+        <div class="main_text">
+          ${cur.structured_formatting.main_text}
+        </div>
+        <div class='text-xs text-gray-700'>
+          ${cur.structured_formatting.secondary_text?cur.structured_formatting.secondary_text:''}
+        </div>
+        
+        </div>`;
+      })
+    } else {
+      data.map((cur, idx) => {
+        if (cur.importance > 0.4) {
+          htmlString += `<div class='p-2 duration-300 cursor-pointer hover:bg-gray-200' coord='${cur.lon},${cur.lat}'>${cur.display_name}</div>`;
+        }
+      })
+    }
+    
     targetDom.innerHTML = htmlString;
     return htmlString;
   }
@@ -160,7 +185,7 @@ class SearchPlace {
       <div coord="${this.selectedPlace.position}" class="flex-1 cursor-pointer hover:bg-gray-800 duration-300 rounded pl-3 py-1 my-2 mx-1">
         ${this.selectedPlace.title}
       </div>
-      <div class="w-8 h-8 flex items-center justify-center rounded-full duration-150 cursor-pointer hover:bg-gray-700">
+      <div class="w-8 h-8 flex items-center justify-center rounded-full duration-150 cursor-pointer hover:bg-gray-700 hidden">
       <svg fill="currentColor" width="1rem" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/></svg>
       </div>
       <div class="w-8 h-8 flex items-center justify-center rounded-full duration-150 cursor-pointer hover:bg-gray-700">
@@ -177,19 +202,17 @@ class SearchPlace {
       day: countDay,
       order : list.querySelectorAll(".plan_place").length
     });
-      console.log("🚀 ~ file: search.js:180 ~ SearchPlace ~ clickHtmlLabel ~ this.selectedPlace.cartesianPosition:", this.selectedPlace.cartesianPosition)
     //Entity간 Line 그리기
     const firstEntity = tourPlan.planInfo.placeList[tourPlan.planInfo.placeList.length-2];
     const secondEntity = tourPlan.planInfo.placeList[tourPlan.planInfo.placeList.length-1];
-    console.log("🚀 ~ file: search.js:182 ~ SearchPlace ~ clickHtmlLabel ~ firstEntity:", firstEntity)
-    tourPlan.drawLineBetweenPlaces(viewer, firstEntity ,secondEntity);
+    if(firstEntity)tourPlan.drawLineBetweenPlaces(viewer, firstEntity ,secondEntity);
 
     //좌측 여행 목록에서 마지막 추가된 여행지에 클릭 이벤트 추가
     const placeDom = list.querySelector(":scope > div:last-child >div:nth-child(2)");
     this.addEventFly(viewer, tourPlanEntity, placeDom);
     //좌측 여행 목록에서 여행지 삭제 버튼에 이벤트 추가
     const placeRemoveBtn = list.querySelector(":scope > .plan_place:last-child >div:last-child");
-    this.addPlaceRemoveEvent(viewer, tourPlanEntity, placeRemoveBtn, tourPlan);
+    tourPlan.addPlaceRemoveEvent(viewer, tourPlanEntity, placeRemoveBtn, tourPlan);
     this.resetSearchGroup(viewer);
   }
   addPlaceRemoveEvent(viewer, entity, removeBtn, tourPlan){

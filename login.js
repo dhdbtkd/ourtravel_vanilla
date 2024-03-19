@@ -1,17 +1,18 @@
 
 import TourPlan from './tourPlan';
-
+import config from './config.js';
 class Login {
   constructor() {
     this.name;
   }
   async loginValidCheck() {
-    const result = await fetch("http://localhost:3000/users/payload", {
+    const result = await fetch(`${config.remoteUrl}/users/payload`, {
       withCredentials: true,
       credentials: "include"
     })
       .then((response) => response.json())
       .then((result) => {
+        console.log("🚀 ~ file: login.js:15 ~ Login ~ .then ~ result:", result)
         if (!result) return false
         if (!result.code) return false
         if (result.code == 200) {
@@ -25,7 +26,7 @@ class Login {
   }
   //로그인
   login(name) {
-    fetch("http://localhost:3000/users/login", {
+    fetch(`${config.remoteUrl}/users/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,7 +51,14 @@ class Login {
     document.querySelector(".map").classList.remove("hidden");
     document.querySelector("#planHeader>div:first-child").innerHTML = `${name}의 여행계획`;
     viewer.useDefaultRenderLoop = true;
-    
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(-122.4175, 37.655, 400),
+      orientation: {
+        heading: Cesium.Math.toRadians(0.0),
+        pitch: Cesium.Math.toRadians(-15.0),
+      }
+    });
+
   }
 }
 export default Login;
