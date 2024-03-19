@@ -29,7 +29,7 @@ class Login {
     fetch(`${config.remoteUrl}/users/login`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       body: JSON.stringify({
         name: name,
